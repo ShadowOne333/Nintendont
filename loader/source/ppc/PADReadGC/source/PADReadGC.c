@@ -115,57 +115,50 @@ u32 PADRead(u32 calledByGame)
 		//Start out mapping buttons first
 		u16 button = 0;
 		u16 drcbutton = (i2cdata[2]<<8) | (i2cdata[3]);
-		//swap abxy when minus is pressed
+		/*swap abxy when minus is pressed
 		if((!(PrevDRCButton & WIIDRC_BUTTON_MINUS)) && drcbutton & WIIDRC_BUTTON_MINUS)
 			PrevDRCButton ^= DRC_SWAP;
 		PrevDRCButton = (PrevDRCButton & DRC_SWAP) | drcbutton;
 		if(PrevDRCButton & DRC_SWAP)
-		{	/* turn buttons quarter clockwise */
+		{	// turn buttons quarter clockwise
 			if(drcbutton & WIIDRC_BUTTON_B) button |= PAD_BUTTON_A;
 			if(drcbutton & WIIDRC_BUTTON_Y) button |= PAD_BUTTON_B;
 			if(drcbutton & WIIDRC_BUTTON_A) button |= PAD_BUTTON_X;
 			if(drcbutton & WIIDRC_BUTTON_X) button |= PAD_BUTTON_Y;
 		}
 		else
-		{
-			if(drcbutton & WIIDRC_BUTTON_A) button |= PAD_BUTTON_A;
-			if(drcbutton & WIIDRC_BUTTON_B) button |= PAD_BUTTON_B;
-			if(drcbutton & WIIDRC_BUTTON_X) button |= PAD_BUTTON_X;
-			if(drcbutton & WIIDRC_BUTTON_Y) button |= PAD_BUTTON_Y;
-		}
+		{*/
+		if(drcbutton & WIIDRC_BUTTON_A) button |= PAD_BUTTON_A;
+		if(drcbutton & WIIDRC_BUTTON_B) button |= PAD_BUTTON_B;
+		if(drcbutton & WIIDRC_BUTTON_X) button |= PAD_BUTTON_X;
+		if(drcbutton & WIIDRC_BUTTON_Y) button |= PAD_BUTTON_Y;
+		//}
 		if(drcbutton & WIIDRC_BUTTON_LEFT) button |= PAD_BUTTON_LEFT;
 		if(drcbutton & WIIDRC_BUTTON_RIGHT) button |= PAD_BUTTON_RIGHT;
 		if(drcbutton & WIIDRC_BUTTON_UP) button |= PAD_BUTTON_UP;
 		if(drcbutton & WIIDRC_BUTTON_DOWN) button |= PAD_BUTTON_DOWN;
 		//also sets left analog trigger
-		if(drcbutton & WIIDRC_BUTTON_ZL)
+		if(drcbutton & WIIDRC_BUTTON_L)
 		{
-			//Check half-press by holding L
-			if(drcbutton & WIIDRC_BUTTON_L)
-				Pad[0].triggerLeft = 0x7F;
-			else
-			{
-				button |= PAD_TRIGGER_L;
-				Pad[0].triggerLeft = 0xFF;
-			}
+			button |= PAD_TRIGGER_L;
+			Pad[0].triggerLeft = 0xFF;
 		}
+		else if(drcbutton & WIIDRC_BUTTON_ZL)
+			Pad[0].triggerLeft = 0x7F;
 		else
 			Pad[0].triggerLeft = 0;
 		//also sets right analog trigger
-		if(drcbutton & WIIDRC_BUTTON_ZR)
+		if(drcbutton & WIIDRC_BUTTON_R)
 		{
-			//Check half-press by holding L
-			if(drcbutton & WIIDRC_BUTTON_L)
-				Pad[0].triggerRight = 0x7F;
-			else
-			{
-				button |= PAD_TRIGGER_R;
-				Pad[0].triggerRight = 0xFF;
-			}
+			button |= PAD_TRIGGER_R;
+			Pad[0].triggerRight = 0xFF;
 		}
+		else if(drcbutton & WIIDRC_BUTTON_ZR)
+			Pad[0].triggerRight = 0x7F;
 		else
 			Pad[0].triggerRight = 0;
-		if(drcbutton & WIIDRC_BUTTON_R) button |= PAD_TRIGGER_Z;
+
+		if(drcbutton & WIIDRC_BUTTON_MINUS) button |= PAD_TRIGGER_Z;
 		if(drcbutton & WIIDRC_BUTTON_PLUS) button |= PAD_BUTTON_START;
 		if(drcbutton & WIIDRC_BUTTON_HOME) goto DoExit;
 		//write in mapped out buttons
@@ -723,34 +716,28 @@ u32 PADRead(u32 calledByGame)
 		}
 		else if(BTPad[chan].used & C_CCP)	//digital triggers
 		{
-			if(BTPad[chan].button & BT_TRIGGER_ZL)
+			if(BTPad[chan].button & BT_TRIGGER_L)
 			{
-				if(BTPad[chan].button & BT_TRIGGER_L)
-					Pad[chan].triggerLeft = 0x7F;
-				else
-				{
-					button |= PAD_TRIGGER_L;
-					Pad[chan].triggerLeft = 0xFF;
-				}
+				button |= PAD_TRIGGER_L;
+				Pad[0].triggerLeft = 0xFF;
 			}
+			else if(BTPad[chan].button & BT_TRIGGER_ZL)
+				Pad[0].triggerLeft = 0x7F;
 			else
 				Pad[chan].triggerLeft = 0;
 
-			if(BTPad[chan].button & BT_TRIGGER_ZR)
+			if(BTPad[chan].button & BT_TRIGGER_R)
 			{
-				if(BTPad[chan].button & BT_TRIGGER_L)
-					Pad[chan].triggerRight = 0x7F;
-				else
-				{
-					button |= PAD_TRIGGER_R;
-					Pad[chan].triggerRight = 0xFF;
-				}
+				button |= PAD_TRIGGER_R;
+				Pad[0].triggerRight = 0xFF;
 			}
+			else if(BTPad[chan].button & BT_TRIGGER_ZR)
+				Pad[0].triggerRight = 0x7F;
 			else
 				Pad[chan].triggerRight = 0;
 
-			if(BTPad[chan].button & BT_TRIGGER_R)
-				button |= PAD_TRIGGER_Z;
+			/*if(BTPad[chan].button & BT_TRIGGER_R)
+				button |= PAD_TRIGGER_Z;*/
 		}
 		
 // Nunchuck Buttons
@@ -1283,17 +1270,17 @@ u32 PADRead(u32 calledByGame)
 
 		if(BTPad[chan].used & (C_CC | C_CCP))
 		{
-			if(BTPad[chan].used & C_SWAP)
-			{	/* turn buttons quarter clockwise */
-				if(BTPad[chan].button & BT_BUTTON_B)
-					button |= PAD_BUTTON_A;
-				if(BTPad[chan].button & BT_BUTTON_Y)
-					button |= PAD_BUTTON_B;
-				if(BTPad[chan].button & BT_BUTTON_A)
-					button |= PAD_BUTTON_X;
-				if(BTPad[chan].button & BT_BUTTON_X)
-					button |= PAD_BUTTON_Y;
-			}
+			//if(BTPad[chan].used & C_SWAP)
+			//{	/* turn buttons quarter clockwise */
+			if(BTPad[chan].button & BT_BUTTON_B)
+				button |= PAD_BUTTON_A;
+			if(BTPad[chan].button & BT_BUTTON_Y)
+				button |= PAD_BUTTON_B;
+			if(BTPad[chan].button & BT_BUTTON_A)
+				button |= PAD_BUTTON_X;
+			if(BTPad[chan].button & BT_BUTTON_X)
+				button |= PAD_BUTTON_Y;
+			/*}
 			else
 			{
 				if(BTPad[chan].button & BT_BUTTON_A)
@@ -1304,10 +1291,11 @@ u32 PADRead(u32 calledByGame)
 					button |= PAD_BUTTON_X;
 				if(BTPad[chan].button & BT_BUTTON_Y)
 					button |= PAD_BUTTON_Y;
-			}
+			}*/
 			if(BTPad[chan].button & BT_BUTTON_START)
 				button |= PAD_BUTTON_START;
-			
+			if(BTPad[chan].button & BT_BUTTON_SELECT) 
+				button |= PAD_TRIGGER_Z;
 			if(BTPad[chan].button & BT_DPAD_LEFT)
 				button |= PAD_BUTTON_LEFT;
 			if(BTPad[chan].button & BT_DPAD_RIGHT)
